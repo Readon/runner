@@ -106,7 +106,7 @@ on:
 env:
   INPUT_REGISTRY: ghcr.io
   INPUT_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-  INPUT_IMAGE: ${{ github.repository }}
+  INPUT_IMAGE_ORG: ${{ github.repository_owner }}
   INPUT_REPOSITORY: runner
   INPUT_CACHE_REPOSITORY: runner-build-cache
 
@@ -192,9 +192,12 @@ jobs:
 
           set -eo pipefail
 
+          # Convert organization name to lowercase for Docker compliance
+          INPUT_IMAGE="${INPUT_REGISTRY}/$(echo "${INPUT_IMAGE_ORG}" | tr '[:upper:]' '[:lower:]')/${INPUT_REPOSITORY}"
+
           # Export tags to GH output.
           echo "tags<<EOF" >> $GITHUB_OUTPUT
-          echo "${INPUT_REGISTRY}/${INPUT_IMAGE}:${INPUT_PLATFORM_TAG}" >> $GITHUB_OUTPUT
+          echo "${INPUT_IMAGE}:${INPUT_PLATFORM_TAG}" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
           # Export build_args to GH output.
@@ -208,7 +211,7 @@ jobs:
           echo "cache_from<<EOF" >> $GITHUB_OUTPUT
           if [[ "${INPUT_WITH_CACHE}" == "true" ]]; then
             for tag_cache in ${INPUT_PLATFORM_TAG_CACHE}; do
-              echo "type=registry,ref=${INPUT_REGISTRY}/${INPUT_IMAGE}/${INPUT_CACHE_REPOSITORY}:${tag_cache}" >> $GITHUB_OUTPUT
+              echo "type=registry,ref=${INPUT_IMAGE}/${INPUT_CACHE_REPOSITORY}:${tag_cache}" >> $GITHUB_OUTPUT
             done
           fi
           echo "EOF" >> $GITHUB_OUTPUT
@@ -217,7 +220,7 @@ jobs:
           echo "cache_to<<EOF" >> $GITHUB_OUTPUT
           if [[ -z "${INPUT_POST_OPERATION}" ]]; then
             for tag_cache in ${INPUT_PLATFORM_TAG_CACHE}; do
-              echo "type=registry,ignore-error=true,mode=max,compression=gzip,ref=${INPUT_REGISTRY}/${INPUT_IMAGE}/${INPUT_CACHE_REPOSITORY}:${tag_cache}" >> $GITHUB_OUTPUT
+              echo "type=registry,ignore-error=true,mode=max,compression=gzip,ref=${INPUT_IMAGE}/${INPUT_CACHE_REPOSITORY}:${tag_cache}" >> $GITHUB_OUTPUT
             done
           fi
           echo "EOF" >> $GITHUB_OUTPUT
@@ -270,17 +273,20 @@ jobs:
 
           set -eo pipefail
 
+          # Convert organization name to lowercase for Docker compliance
+          INPUT_IMAGE="${INPUT_REGISTRY}/$(echo "${INPUT_IMAGE_ORG}" | tr '[:upper:]' '[:lower:]')/${INPUT_REPOSITORY}"
+
           # Iterate all items of manifest jobs.
           for TAG in $(echo "${INPUT_MANIFEST_JOBS}" | jq -r 'keys[]'); do
               PLATFORM_TAGS="$(echo "${INPUT_MANIFEST_JOBS}" | jq -r \
                 --arg tag "${TAG}" \
-                --arg repo "${INPUT_REGISTRY}/${INPUT_IMAGE}" \
+                --arg repo "${INPUT_IMAGE}" \
                 '.[$tag] | map($repo + ":" + .) | join(" ")')"
-              echo "[INFO]: Creating manifest '${INPUT_REGISTRY}/${INPUT_IMAGE}:${TAG}' with '${PLATFORM_TAGS}'"
-              docker manifest create --amend "${INPUT_REGISTRY}/${INPUT_IMAGE}:${TAG}" ${PLATFORM_TAGS}
-              docker manifest inspect "${INPUT_REGISTRY}/${INPUT_IMAGE}:${TAG}"
-              echo "[INFO]: Pushing manifest '${INPUT_REGISTRY}/${INPUT_IMAGE}:${TAG}'"
-              docker manifest push --purge "${INPUT_REGISTRY}/${INPUT_IMAGE}:${TAG}"
+              echo "[INFO]: Creating manifest '${INPUT_IMAGE}:${TAG}' with '${PLATFORM_TAGS}'"
+              docker manifest create --amend "${INPUT_IMAGE}:${TAG}" ${PLATFORM_TAGS}
+              docker manifest inspect "${INPUT_IMAGE}:${TAG}"
+              echo "[INFO]: Pushing manifest '${INPUT_IMAGE}:${TAG}'"
+              docker manifest push --purge "${INPUT_IMAGE}:${TAG}"
           done
 
   # Submit a PR to merge the runner.
