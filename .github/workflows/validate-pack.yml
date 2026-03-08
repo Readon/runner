@@ -1,0 +1,79 @@
+# This workflow validates pack matrix expansion on copilot/* branches.
+# It runs expand_matrix.sh in dry-run mode (no Docker build) to confirm
+# that SGLANG_BASE_IMAGE and similar args use the configured registry
+# instead of the hardcoded 'gpustack/runner' prefix.
+
+name: validate-pack
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  push:
+    branches:
+      - "copilot/*"
+    paths:
+      - "pack/**"
+      - ".github/workflows/pack.yml"
+      - ".github/workflows/validate-pack.yml"
+
+env:
+  INPUT_REGISTRY: ghcr.io
+  INPUT_IMAGE_ORG: ${{ github.repository_owner }}
+  INPUT_REPOSITORY: runner
+
+jobs:
+  validate-matrix:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+      - name: Validate Matrix Expansion
+        env:
+          INPUT_BACKEND: cuda
+          INPUT_TARGET: sglang
+          INPUT_FOR_RELEASE: "false"
+          INPUT_RUNNER_PROFILE: normal
+          INPUT_WORKSPACE: ${{ github.workspace }}/pack
+          INPUT_TEMPDIR: ${{ runner.temp }}
+        run: |
+          #!/usr/bin/env bash
+          set -eo pipefail
+
+          # Run expand_matrix.sh (outputs to GITHUB_OUTPUT, which we redirect to /dev/null)
+          GITHUB_OUTPUT=/dev/null bash "${{ github.workspace }}/pack/expand_matrix.sh" > /tmp/matrix_output.txt 2>&1
+          cat /tmp/matrix_output.txt
+
+          # Extract build_jobs from the output
+          BUILD_JOBS="$(grep -A 9999 'build_jobs=' /tmp/matrix_output.txt | tail -n +2 | grep -B 9999 'manifest_jobs=' | head -n -1)"
+
+          # Verify SGLANG_BASE_IMAGE uses ghcr.io registry, not docker.io/gpustack
+          EXPECTED_PREFIX="${INPUT_REGISTRY}/$(echo "${INPUT_IMAGE_ORG}" | tr '[:upper:]' '[:lower:]')/${INPUT_REPOSITORY}"
+          echo "[CHECK] Expected image prefix: ${EXPECTED_PREFIX}"
+
+          if echo "${BUILD_JOBS}" | grep -q "SGLANG_BASE_IMAGE=gpustack/runner"; then
+            echo "[FAIL] Found hardcoded 'gpustack/runner' in SGLANG_BASE_IMAGE — fix not applied!"
+            exit 1
+          fi
+
+          if ! echo "${BUILD_JOBS}" | grep -q "SGLANG_BASE_IMAGE=${EXPECTED_PREFIX}"; then
+            echo "[FAIL] SGLANG_BASE_IMAGE does not use expected prefix '${EXPECTED_PREFIX}'"
+            echo "Actual args in build_jobs:"
+            echo "${BUILD_JOBS}" | grep -o '"SGLANG[^"]*"' || true
+            exit 1
+          fi
+
+          echo "[PASS] SGLANG_BASE_IMAGE correctly uses '${EXPECTED_PREFIX}'"
+          echo "[PASS] Matrix expansion validation succeeded"

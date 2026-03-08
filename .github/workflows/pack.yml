@@ -17,6 +17,12 @@ defaults:
     shell: bash
 
 on:
+  push:
+    branches:
+      - "copilot/*"
+    paths:
+      - "pack/**"
+      - ".github/workflows/pack.yml"
   workflow_dispatch:
     inputs:
       # Post operation for mutating a released image.
@@ -109,6 +115,8 @@ env:
   INPUT_IMAGE_ORG: ${{ github.repository_owner }}
   INPUT_REPOSITORY: runner
   INPUT_CACHE_REPOSITORY: runner-build-cache
+  # For push events (e.g. copilot/* branches), always use dry_run mode; otherwise use the workflow_dispatch input.
+  INPUT_DRY_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run == 'true' }}
 
 jobs:
   # Expand the matrix based on the input parameters.
@@ -127,12 +135,12 @@ jobs:
         id: expand-matrix
         env:
           INPUT_POST_OPERATION: ${{ github.event.inputs.post_operation }}
-          INPUT_BACKEND: ${{ github.event.inputs.backend }}
-          INPUT_TARGET: ${{ github.event.inputs.target }}
+          INPUT_BACKEND: ${{ github.event.inputs.backend || 'cuda' }}
+          INPUT_TARGET: ${{ github.event.inputs.target || 'sglang' }}
           INPUT_TAG: ${{ github.event.inputs.tag }}
           INPUT_ARGS: ${{ github.event.inputs.args }}
-          INPUT_FOR_RELEASE: ${{ github.event.inputs.for_release }}
-          INPUT_RUNNER_PROFILE: ${{ github.event.inputs.runner_profile }}
+          INPUT_FOR_RELEASE: ${{ github.event.inputs.for_release || 'false' }}
+          INPUT_RUNNER_PROFILE: ${{ github.event.inputs.runner_profile || 'normal' }}
           INPUT_WORKSPACE: ${{ github.workspace }}/pack
           INPUT_TEMPDIR: ${{ runner.temp }}
         run: ${{ github.workspace }}/pack/expand_matrix.sh
@@ -155,7 +163,7 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
       - name: Maximize Docker Build Space
-        if: ${{ github.event.inputs.dry_run == 'false' && (github.event.inputs.runner_clean == 'true' || github.event.inputs.runner_profile == 'normal') }}
+        if: ${{ env.INPUT_DRY_RUN == 'false' && (github.event.inputs.runner_clean == 'true' || github.event.inputs.runner_profile == 'normal') }}
         uses: gpustack/.github/.github/actions/maximize-docker-build-space@main
         with:
           deep-clean: true
@@ -173,7 +181,7 @@ jobs:
             --oci-worker-net=host
             --oci-worker-gc-keepstorage=204800
       - name: Login to GitHub Container Registry
-        if: ${{ github.event.inputs.dry_run == 'false' }}
+        if: ${{ env.INPUT_DRY_RUN == 'false' }}
         uses: docker/login-action@v3
         with:
           registry: ${{ env.INPUT_REGISTRY }}
@@ -231,11 +239,11 @@ jobs:
           allow: |
             network.host
             security.insecure
-          call: ${{ github.event.inputs.dry_run == 'true' && 'check' || 'build' }}
+          call: ${{ env.INPUT_DRY_RUN == 'true' && 'check' || 'build' }}
           ulimit: |
             nofile=65536:65536
           shm-size: '16G'
-          push: ${{ github.event.inputs.dry_run == 'false' }}
+          push: ${{ env.INPUT_DRY_RUN == 'false' }}
           provenance: false
           sbom: false
           context: ${{ github.workspace }}/pack${{ github.event.inputs.post_operation && format('/.post_operation/{0}', github.event.inputs.post_operation) || '' }}/${{ matrix.backend }}
@@ -253,7 +261,7 @@ jobs:
 
   # Merge all architecture images into manifest list.
   manifest:
-    if: ${{ github.event.inputs.dry_run == 'false' }}
+    if: ${{ env.INPUT_DRY_RUN == 'false' }}
     needs:
       - expand-matrix
       - build
@@ -291,7 +299,7 @@ jobs:
 
   # Submit a PR to merge the runner.
   merge-runner:
-    if: ${{ github.event.inputs.dry_run == 'false' && github.event.inputs.target != 'runtime' && github.event.inputs.for_release == 'true' && github.event.inputs.post_operation == '' }}
+    if: ${{ env.INPUT_DRY_RUN == 'false' && github.event.inputs.target != 'runtime' && github.event.inputs.for_release == 'true' && github.event.inputs.post_operation == '' }}
     needs:
       - expand-matrix
       - manifest
