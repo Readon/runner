@@ -7,6 +7,7 @@ name: squash
 permissions:
   actions: read
   contents: read
+  packages: write
   pull-requests: read
 
 defaults:
@@ -45,8 +46,9 @@ on:
         default: false
 
 env:
-  INPUT_USERNAME: gpustack
-  INPUT_PASSWORD: ${{ secrets.CI_DOCKERHUB_PASSWORD }}
+  INPUT_REGISTRY: ghcr.io
+  INPUT_USERNAME: ${{ github.actor }}
+  INPUT_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   # Expand the matrix based on the input parameters.
@@ -91,9 +93,10 @@ jobs:
         with:
           deep-clean: true
           root-reserve-mb: 20480
-      - name: Login DockerHub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
+          registry: ${{ env.INPUT_REGISTRY }}
           username: ${{ env.INPUT_USERNAME }}
           password: ${{ env.INPUT_PASSWORD }}
       - name: Squash
@@ -110,9 +113,10 @@ jobs:
       - squash
     runs-on: ubuntu-22.04
     steps:
-      - name: Login DockerHub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
+          registry: ${{ env.INPUT_REGISTRY }}
           username: ${{ env.INPUT_USERNAME }}
           password: ${{ env.INPUT_PASSWORD }}
       - name: Manifest
