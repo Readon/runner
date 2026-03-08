@@ -2,11 +2,21 @@
 
 set -eo pipefail
 
+INPUT_REGISTRY="${INPUT_REGISTRY:-""}"
+INPUT_IMAGE_ORG="${INPUT_IMAGE_ORG:-""}"
 INPUT_NAMESPACE="${INPUT_NAMESPACE:-"gpustack"}"
 INPUT_REPOSITORY="${INPUT_REPOSITORY:-"runner"}"
 INPUT_BUILD_JOBS="${INPUT_BUILD_JOBS:-"[]"}"
 INPUT_WORKSPACE="${INPUT_WORKSPACE:-"$(dirname "${BASH_SOURCE[0]}")"}"
 INPUT_TEMPDIR="${INPUT_TEMPDIR:-"/tmp"}"
+
+# Build the image prefix: use registry/org when available, otherwise fall back to namespace.
+if [[ -n "${INPUT_REGISTRY}" && -n "${INPUT_IMAGE_ORG}" ]]; then
+    IMAGE_ORG_LOWER="$(echo "${INPUT_IMAGE_ORG}" | tr '[:upper:]' '[:lower:]')"
+    IMAGE_PREFIX="${INPUT_REGISTRY}/${IMAGE_ORG_LOWER}"
+else
+    IMAGE_PREFIX="${INPUT_NAMESPACE}"
+fi
 
 #
 # Merge new runners with existing runners.
@@ -19,7 +29,7 @@ OUTPUT_FILE="${OUTPUT_DIR}/runner.py.json"
 
 # Construct new runners from the input build jobs.
 NEW_RUNNERS="$(echo "${INPUT_BUILD_JOBS}" | jq -cr \
-    --arg namespace "${INPUT_NAMESPACE}" \
+    --arg image_prefix "${IMAGE_PREFIX}" \
     --arg repository "${INPUT_REPOSITORY}" \
     '.[] | {
         backend: .backend,
@@ -29,7 +39,7 @@ NEW_RUNNERS="$(echo "${INPUT_BUILD_JOBS}" | jq -cr \
         service: .service,
         service_version: .service_version,
         platform: .platform,
-        docker_image: ($namespace + "/" + $repository + ":" + .tag),
+        docker_image: ($image_prefix + "/" + $repository + ":" + .tag),
         deprecated: (.deprecated // false),
     }' | jq -cs .)"
 
