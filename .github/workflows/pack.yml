@@ -116,7 +116,7 @@ env:
   INPUT_REPOSITORY: runner
   INPUT_CACHE_REPOSITORY: runner-build-cache
   # For push events (e.g. copilot/* branches), always use dry_run mode; otherwise use the workflow_dispatch input.
-  INPUT_DRY_RUN: ${{ github.event_name != 'workflow_dispatch' && 'true' || (github.event.inputs.dry_run || 'false') }}
+  INPUT_DRY_RUN: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run == 'true' }}
 
 jobs:
   # Expand the matrix based on the input parameters.
