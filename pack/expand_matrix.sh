@@ -58,6 +58,15 @@ for BACKEND in $(echo "${BACKENDS}" | jq -cr '.[]'); do
         'map(if .backend == $backend then {full_args: $full_args} + . else . end)')"
 done
 
+# Substitute the default image namespace in args to use the configured registry.
+if [[ -n "${INPUT_REGISTRY}" && -n "${INPUT_IMAGE_ORG}" && -n "${INPUT_REPOSITORY}" ]]; then
+    IMAGE_ORG_LOWER="$(echo "${INPUT_IMAGE_ORG}" | tr '[:upper:]' '[:lower:]')"
+    INPUT_IMAGE="${INPUT_REGISTRY}/${IMAGE_ORG_LOWER}/${INPUT_REPOSITORY}"
+    RULES="$(echo "${RULES}" | jq -cr \
+        --arg replacement "${INPUT_IMAGE}" \
+        'map(.args |= map(gsub("gpustack/runner"; $replacement)))')"
+fi
+
 # Iterate all items of rules to generate the matrix.
 MANIFEST_JOBS="{}"
 BUILD_JOBS="[]"
