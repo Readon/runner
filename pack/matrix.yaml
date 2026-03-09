@@ -87,8 +87,8 @@ rules:
     args:
       - "CUDA_VERSION=12.9.1"
       - "VLLM_VERSION=0.17.0"
-      - "SGLANG_BASE_IMAGE=gpustack/runner:cuda12.9-vllm0.17.0"
-      - "SGLANG_BUILD_BASE_IMAGE=gpustack/runner:cuda12.9-vllm0.17.0"
+      - "SGLANG_BASE_IMAGE=ghcr.io/readon/runner:cuda12.9-vllm0.17.0"
+      - "SGLANG_BUILD_BASE_IMAGE=ghcr.io/readon/runner:cuda12.9-vllm0.17.0"
   ## NVIDIA CUDA 12.8.1
   ##
   - backend: "cuda"
@@ -99,8 +99,8 @@ rules:
     args:
       - "CUDA_VERSION=12.8.1"
       - "VLLM_VERSION=0.17.0"
-      - "SGLANG_BASE_IMAGE=gpustack/runner:cuda12.8-vllm0.17.0"
-      - "SGLANG_BUILD_BASE_IMAGE=gpustack/runner:cuda12.8-vllm0.17.0"
+      - "SGLANG_BASE_IMAGE=ghcr.io/readon/runner:cuda12.8-vllm0.17.0"
+      - "SGLANG_BUILD_BASE_IMAGE=ghcr.io/readon/runner:cuda12.8-vllm0.17.0"
 
   #
   # Hygon DTK
