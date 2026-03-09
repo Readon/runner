@@ -1013,7 +1013,8 @@ RUN --mount=type=bind,from=vllm-build-flashattention,source=/,target=/flashatten
         && uv pip install grpcio-tools==1.78.0 \
         && VLLM_TARGET_DEVICE="cuda" python -v -m build --no-isolation --wheel \
         && tree -hs /tmp/vllm/dist \
-        && mkdir -p /workspace && mv /tmp/vllm/dist/*.whl /workspace/
+        && mkdir -p /workspace && mv /tmp/vllm/dist/*.whl /workspace/ \
+        && ls -la /workspace/*.whl
 
     # Cleanup
     rm -rf /var/tmp/* \
@@ -1341,6 +1342,12 @@ ENV VLLM_VERSION=${VLLM_VERSION}
 
 RUN --mount=type=bind,from=vllm-build-vllm,source=/,target=/vllm,rw <<EOF
     # vLLM
+
+    # Verify build stage produced wheels
+    if [ -z "$(find /vllm/workspace -name "*.whl" -type f -print -quit)" ]; then
+        echo "ERROR: No wheel files found in /vllm/workspace/ - vllm-build-vllm stage may have used stale cache or failed"
+        exit 1
+    fi
 
     # Install
     uv pip install \
