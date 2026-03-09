@@ -686,7 +686,7 @@ RUN <<EOF
     FI_CUDA_ARCHS="${CUDA_ARCHS}"
     if [[ -z "${FI_CUDA_ARCHS}" ]]; then
         if (( $(echo "${CUDA_MAJOR}.${CUDA_MINOR} < 12.9" | bc -l) )); then
-            FI_CUDA_ARCHS="7.5 8.0 8.9 9.0a 10.0a 12.0a"
+            FI_CUDA_ARCHS="7.5 8.0 8.9 9.0a 10.0a"
         else
             FI_CUDA_ARCHS="7.5 8.0 8.9 9.0a 10.0a 10.3a 12.0a"
         fi
@@ -993,7 +993,7 @@ RUN --mount=type=bind,from=vllm-build-flashattention,source=/,target=/flashatten
     VL_CUDA_ARCHS="${CUDA_ARCHS}"
     if [[ -z "${VL_CUDA_ARCHS}" ]]; then
         if (( $(echo "${CUDA_MAJOR}.${CUDA_MINOR} < 12.9" | bc -l) )); then
-            VL_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0+PTX 12.0+PTX"
+            VL_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0+PTX"
         else
             VL_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0 10.3 12.0 12.1+PTX"
         fi
@@ -1061,7 +1061,7 @@ RUN --mount=type=bind,from=vllm-build-vllm,source=/,target=/vllm,rw <<EOF
     VL_CUDA_ARCHS="${CUDA_ARCHS}"
     if [[ -z "${VL_CUDA_ARCHS}" ]]; then
         if (( $(echo "${CUDA_MAJOR}.${CUDA_MINOR} < 12.9" | bc -l) )); then
-            VL_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0+PTX 12.0+PTX"
+            VL_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0+PTX"
         else
             VL_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0 10.3 12.0 12.1+PTX"
         fi
@@ -1126,7 +1126,7 @@ RUN --mount=type=bind,from=vllm-build-vllm,source=/,target=/vllm,rw <<EOF
     LC_CUDA_ARCHS="${CUDA_ARCHS}"
     if [[ -z "${LC_CUDA_ARCHS}" ]]; then
         if (( $(echo "${CUDA_MAJOR}.${CUDA_MINOR} < 12.9" | bc -l) )); then
-            LC_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0+PTX 12.0+PTX"
+            LC_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0+PTX"
         else
             LC_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0 10.3 12.0 12.1+PTX"
         fi
@@ -1660,7 +1660,7 @@ RUN <<EOF
     SG_CUDA_ARCHS="${CUDA_ARCHS}"
     if [[ -z "${SG_CUDA_ARCHS}" ]]; then
         if (( $(echo "${CUDA_MAJOR}.${CUDA_MINOR} < 12.9" | bc -l) )); then
-            SG_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0+PTX 12.0+PTX"
+            SG_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0+PTX"
         else
             SG_CUDA_ARCHS="7.5 8.0+PTX 8.9 9.0 10.0 10.3 12.0 12.1+PTX"
         fi
