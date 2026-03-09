@@ -410,6 +410,7 @@ RUN <<EOF
 
     # Install
     cat <<EOT >/tmp/requirements.txt
+setuptools
 transformers==4.51.3
 numba==0.61.2
 llvmlite==0.44.0  # Compatible with Python 3.11
@@ -550,7 +551,7 @@ RUN <<EOF
     pushd /tmp/gdrcopy/packages && \
         CUDA=/usr/local/cuda ./build-deb-packages.sh && \
         tree -hs /tmp/gdrcopy/packages && \
-        mv /tmp/gdrcopy/packages /workspace
+        mkdir -p /workspace && mv /tmp/gdrcopy/packages/*.deb /workspace/
 
     # Cleanup
     rm -rf /var/tmp/* \
@@ -625,7 +626,7 @@ RUN <<EOF
     pushd /tmp/flashattention \
       && python -v -m build --no-isolation --wheel \
       && tree -hs /tmp/flashattention/dist \
-      && mv /tmp/flashattention/dist /workspace
+      && mkdir -p /workspace && mv /tmp/flashattention/dist/*.whl /workspace/
 
     # Cleanup
     rm -rf /var/tmp/* \
@@ -703,7 +704,7 @@ RUN <<EOF
       && python -v -m flashinfer.aot \
       && python -v -m build --no-isolation --wheel \
       && tree -hs /tmp/flashinfer/dist \
-      && mv /tmp/flashinfer/dist /workspace
+      && mkdir -p /workspace && mv /tmp/flashinfer/dist/*.whl /workspace/
 
     # Cleanup
     rm -rf /var/tmp/* \
@@ -768,7 +769,7 @@ RUN <<EOF
     pushd /tmp/deep_gemm \
         && python -v -m build --no-isolation --wheel \
         && tree -hs /tmp/deep_gemm/dist \
-        && mv /tmp/deep_gemm/dist /workspace
+        && mkdir -p /workspace && mv /tmp/deep_gemm/dist/*.whl /workspace/
 
     # Cleanup
     rm -rf /var/tmp/* \
@@ -883,7 +884,7 @@ RUN <<EOF
         fi \
         && python -v -m build --no-isolation --wheel \
         && tree -hs /tmp/deep_ep/dist \
-        && mv /tmp/deep_ep/dist /workspace
+        && mkdir -p /workspace && mv /tmp/deep_ep/dist/*.whl /workspace/
 
     # Cleanup
     rm -rf /var/tmp/* \
@@ -950,7 +951,7 @@ RUN <<EOF
     pushd /tmp/pplx-kernels \
         && python -v -m build --no-isolation --wheel \
         && tree -hs /tmp/pplx-kernels/dist \
-        && mv /tmp/pplx-kernels/dist /workspace
+        && mkdir -p /workspace && mv /tmp/pplx-kernels/dist/*.whl /workspace/
 
     # Cleanup
     rm -rf /var/tmp/* \
@@ -1012,7 +1013,7 @@ RUN --mount=type=bind,from=vllm-build-flashattention,source=/,target=/flashatten
         && uv pip install grpcio-tools==1.78.0 \
         && VLLM_TARGET_DEVICE="cuda" python -v -m build --no-isolation --wheel \
         && tree -hs /tmp/vllm/dist \
-        && mv /tmp/vllm/dist /workspace
+        && mkdir -p /workspace && mv /tmp/vllm/dist/*.whl /workspace/
 
     # Cleanup
     rm -rf /var/tmp/* \
@@ -1082,7 +1083,7 @@ RUN --mount=type=bind,from=vllm-build-vllm,source=/,target=/vllm,rw <<EOF
         && if [[ "${TARGETARCH}" == "arm64" ]]; then sed -i "/fa3-fwd.*/d" /tmp/vllm_omni/requirements/cuda.txt; fi \
         && python -v -m build --no-isolation --wheel \
         && tree -hs /tmp/vllm_omni/dist \
-        && mv /tmp/vllm_omni/dist /workspace
+        && mkdir -p /workspace && mv /tmp/vllm_omni/dist/*.whl /workspace/
 
     # Cleanup
     rm -rf /var/tmp/* \
@@ -1145,7 +1146,7 @@ RUN --mount=type=bind,from=vllm-build-vllm,source=/,target=/vllm,rw <<EOF
         && cat /tmp/lmcache/pyproject.toml \
         && python -v -m build --no-isolation --wheel \
         && tree -hs /tmp/lmcache/dist \
-        && mv /tmp/lmcache/dist /workspace
+        && mkdir -p /workspace && mv /tmp/lmcache/dist/*.whl /workspace/
 
     # Cleanup
     rm -rf /var/tmp/* \
@@ -1685,7 +1686,7 @@ RUN <<EOF
         && cat /tmp/sglang/python/pyproject.toml \
         && python -v -m build --no-isolation --wheel \
         && tree -hs /tmp/sglang/python/dist \
-        && mv /tmp/sglang/python/dist /workspace
+        && mkdir -p /workspace && mv /tmp/sglang/python/dist/*.whl /workspace/
 
     # Download pre-complied SGLang Kernel
     if (( $(echo "${CUDA_MAJOR}.${CUDA_MINOR} <= 12.9" | bc -l) )); then
@@ -1748,7 +1749,7 @@ RUN --mount=type=bind,from=sglang-build-sglang,source=/,target=/sglang,rw <<EOF
     pushd /tmp/sglang/sgl-model-gateway/bindings/python \
         && ulimit -n 65536 && maturin build --release --features vendored-openssl --out dist \
         && tree -hs /tmp/sglang/sgl-model-gateway/bindings/python/dist \
-        && mv /tmp/sglang/sgl-model-gateway/bindings/python/dist /workspace
+        && mkdir -p /workspace && mv /tmp/sglang/sgl-model-gateway/bindings/python/dist/*.whl /workspace/
 
     # Cleanup
     rm -rf /var/tmp/* \

@@ -1008,7 +1008,7 @@
         "service": "vllm",
         "service_version": "0.17.0",
         "platform": "linux/amd64",
-        "docker_image": "gpustack/runner:cuda12.9-vllm0.17.0",
+        "docker_image": "ghcr.io/readon/runner:cuda12.9-vllm0.17.0",
         "deprecated": false
       },
       {
@@ -1019,7 +1019,7 @@
         "service": "vllm",
         "service_version": "0.17.0",
         "platform": "linux/arm64",
-        "docker_image": "gpustack/runner:cuda12.9-vllm0.17.0",
+        "docker_image": "ghcr.io/readon/runner:cuda12.9-vllm0.17.0",
         "deprecated": false
       },
       {
@@ -1305,7 +1305,7 @@
         "service": "vllm",
         "service_version": "0.17.0",
         "platform": "linux/amd64",
-        "docker_image": "gpustack/runner:cuda12.8-vllm0.17.0",
+        "docker_image": "ghcr.io/readon/runner:cuda12.8-vllm0.17.0",
         "deprecated": false
       },
       {
@@ -1316,7 +1316,7 @@
         "service": "vllm",
         "service_version": "0.17.0",
         "platform": "linux/arm64",
-        "docker_image": "gpustack/runner:cuda12.8-vllm0.17.0",
+        "docker_image": "ghcr.io/readon/runner:cuda12.8-vllm0.17.0",
         "deprecated": false
       },
       {
